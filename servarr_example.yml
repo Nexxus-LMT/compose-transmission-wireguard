@@ -1,0 +1,106 @@
+services:
+  wireguard:
+    image: linuxserver/wireguard:version-v1.0.20210914
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    sysctls:
+      - net.ipv6.conf.all.disable_ipv6=0
+      - net.ipv4.conf.all.src_valid_mark=1
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Dominica
+    ports:
+      - "9091:9091/tcp"
+      - "8989:8989/tcp"
+      - "9696:9696/tcp"
+      - "7878:7878/tcp"
+      - "8686:8686/tcp"
+      - "5055:5055/tcp"
+    volumes:
+      - ./wg0.conf:/config/wg0.conf
+      - /lib/modules:/lib/modules
+    restart: always
+  transmission:
+    image: linuxserver/transmission:version-3.00-r5
+    network_mode: "service:wireguard"
+    depends_on:
+      - wireguard
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Dominica
+      - TRANSMISSION_WEB_HOME=/transmissionic/
+    env_file:
+      - ./transmission.env
+    volumes:
+      - ./transmission-config:/config
+      - ./Downloads:/downloads
+      - ./watch:/watch
+    restart: always
+  sonarr:
+    image: linuxserver/sonarr:latest
+    network_mode: "service:wireguard"
+    depends_on:
+      - wireguard
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Dominica
+    volumes:
+      - ./Sonarr/config:/config
+      - ./Media/tv:/tv
+      - ./Downloads:/downloads
+    restart: always
+  prowlarr:
+    image: linuxserver/prowlarr:0.4.10-nightly
+    network_mode: "service:wireguard"
+    depends_on:
+      - wireguard
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Dominica
+    volumes:
+      - ./prowlarr/config:/config
+    restart: always
+  radarr:
+    image: linuxserver/radarr:latest
+    network_mode: "service:wireguard"
+    depends_on:
+      - wireguard
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=
+    volumes:
+      - ./Radarr/config:/config
+      - ./Media/Movies:/movies
+      - ./Downloads:/downloads
+    restart: always
+  lidarr:
+    image: linuxserver/lidarr:latest
+    network_mode: "service:wireguard"
+    depends_on:
+      - wireguard
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=
+    volumes:
+      - ./lidarr/config:/config
+      - ./Media/Music:/music
+      - ./Downloads:/downloads
+    restart: always
+  jellyseer:
+    image: fallenbagel/jellyseerr:latest
+    network_mode: "service:wireguard"
+    depends_on:
+      - wireguard
+    environment:
+      - LOG_LEVEL=debug
+      - TZ=
+    volumes:
+      - ./Jellyseer/config:/app/config
+    restart: always
